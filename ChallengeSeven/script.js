@@ -52,12 +52,21 @@ going to use the power of closures for this, but you do't have to, jusr do ths w
         }
     }
 
-    Question.prototype.checkAnswer = function(ans) {
+    Question.prototype.checkAnswer = function(ans, callback) {
+        var sc;
         if (ans === this.correct) {
             console.log('Correct answer!');
+            sc = callback(true);
         } else {
             console.log('Wrong answer try again!');
+            sc = callback(false);
         }
+        this.displayScore(sc);
+    }
+
+    Question.prototype.displayScore = function(score) {
+        console.log(`Your current score is ${score}`);
+
     }
     var q1 = new Question('What is the name of this courses\'s teacher', ['John', 'Mike', 'Jonas'], 2);
     var q2 = new Question('Javascript the coolest programming language in the world', ['Yes', 'No'], 0);
@@ -65,11 +74,25 @@ going to use the power of closures for this, but you do't have to, jusr do ths w
 
     var question = [q1, q2, q3];
 
-    var n = Math.floor(Math.random() * question.length);
+    function score() {
+        var sc = 0;
+        return function(correct) {
+            if (correct) {
+                sc++;
+            }
+            return sc;
+        }
+    }
+    var keepScore = score();
 
-    question[n].displayQuestion();
-
-    var answer = parseInt(prompt('Please select the correct answer'));
-
-    question[n].checkAnswer(answer);
+    function nextQuestion() {
+        var n = Math.floor(Math.random() * question.length);
+        question[n].displayQuestion();
+        var answer = prompt('Please select the correct answer');
+        if (answer !== 'exit') {
+            question[n].checkAnswer(parseInt(answer), keepScore);
+            nextQuestion();
+        }
+    }
+    nextQuestion();
 })();
