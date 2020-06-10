@@ -38,7 +38,6 @@ const budgetController = (() => {
             } else {
                 ID = 0;
             }
-
             if (type === 'exp') {
                 newItem = new Expense(ID, des, val);
             } else if (type === 'inc') {
@@ -47,15 +46,23 @@ const budgetController = (() => {
             data.allItems[type].push(newItem);
             return newItem;
         },
+        deleteItem: function(type, id) {
+            let ids, index;
+            console.log(type);
+            console.log(data.allItems[type]);
+            ids = data.allItems[type].map(current => current.id);
+
+            index = ids.indexOf(id);
+            if (index !== -1) {
+                data.allItems[type].splice(index, 1);
+            }
+        },
         calculateBudget: () => {
-            // calcuate total income an expense
             calculateTotal('exp');
             calculateTotal('inc');
 
-            // calculate the budger: income - expense
             data.budget = data.totals.inc - data.totals.exp;
 
-            // calculate the percentage of income that we spent
             if (data.totals.inc > 0) {
                 data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
             } else {
@@ -93,6 +100,7 @@ const UIController = (() => {
         incomeLabel: '.budget__income--value',
         expenseLabel: '.budget__expenses--value',
         percentageLabel: '.budget__expenses--percentage',
+        container: '.container'
     }
 
     return {
@@ -108,16 +116,21 @@ const UIController = (() => {
             var html, newHTML, element;
             if (type === 'inc') {
                 element = DOMstrings.incomeContainer;
-                html = '<div class = "item clearfix" id = "income-%id%"><div class = "item__description" > %description% </div><div class ="right clearfix"><div class = "item__value"> %value% </div><div class = "item__delete" > <button class = "item__delete--btn"><i class = "ion-ios-close-outline"/></button ></div></div></div>';
+                html = '<div class = "item clearfix" id = "inc-%id%"><div class = "item__description" > %description% </div><div class ="right clearfix"><div class = "item__value"> %value% </div><div class = "item__delete" > <button class = "item__delete--btn"><i class = "ion-ios-close-outline"/></button ></div></div></div>';
             } else if (type === 'exp') {
                 element = DOMstrings.expensesContainer;
-                html = '<div class = "item clearfix" id = "expense-%id%"><div class = "item__description"> %description% </div><div class = "right clearfix"><div class = "item__value"> %value%  </div> <div class = "item__percentage" > 21 % </div><div class = "item__delete"><button class = "item__delete--btn" > <i class = "ion-ios-close-outline"/></button></div></div></div>'
+                html = '<div class = "item clearfix" id = "exp-%id%"><div class = "item__description"> %description% </div><div class = "right clearfix"><div class = "item__value"> %value%  </div> <div class = "item__percentage" > 21 % </div><div class = "item__delete"><button class = "item__delete--btn" > <i class = "ion-ios-close-outline"/></button></div></div></div>'
             }
             newHTML = html.replace('%id%', obj.id);
             newHTML = newHTML.replace('%description%', obj.description);
             newHTML = newHTML.replace('%value%', obj.value);
             document.querySelector(element).insertAdjacentHTML('beforeend', newHTML)
 
+        },
+
+        deleteListItem: (selectorID) => {
+            let element = document.getElementById(selectorID);
+            element.parentNode.removeChild(element);
         },
 
         clearsFields: () => {
@@ -162,6 +175,7 @@ const controler = ((budgetCtrl, UICtrl) => {
                 ctrlAddItem();
             }
         });
+        document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem)
     };
 
     const updateBudget = () => {
@@ -176,7 +190,6 @@ const controler = ((budgetCtrl, UICtrl) => {
 
     }
 
-
     const ctrlAddItem = () => {
         let input, newItem;
         input = UICtrl.getInput();
@@ -185,6 +198,18 @@ const controler = ((budgetCtrl, UICtrl) => {
             UICtrl.addListItem(newItem, input.type)
             UICtrl.clearsFields();
             updateBudget();
+        }
+    }
+
+    const ctrlDeleteItem = (event) => {
+        let itemID, splitID, type, ID;
+        itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
+        if (itemID) {
+            splitID = itemID.split('-');
+            type = splitID[0];
+            ID = parseInt(splitID[1]);
+            budgetCtrl.deleteItem(type, ID);
+            UICtrl.deleteListItem(itemID);
         }
     }
 
